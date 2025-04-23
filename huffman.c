@@ -192,6 +192,8 @@ void montar_dicionario(No *raiz, char *caminho, int profundidade, char **diciona
     montar_dicionario(raiz->direita, caminho, profundidade + 1, dicionario);
 }
 
+//---------------- Parte 5: Codificar ----------------------------------------------
+
 int calcula_tamanho_string(char **dicionario, unsigned char *texto) {
     int i = 0, tam = 0;
     while (texto[i] != '\0') {
