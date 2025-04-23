@@ -170,6 +170,8 @@ void imprimir_arvore(No *raiz, int tam) {
     }
 }
 
+//----------------- Parte 4: Montar o dicionário ------------------------------------
+
 void montar_dicionario(No *raiz, char *caminho, int profundidade, char **dicionario) {
     if (raiz == NULL) return;
 

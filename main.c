@@ -3,53 +3,57 @@
 #include "huffman.h"
 
 int main(int argc, char *argv[]) {
+
     if (argc != 2) {
-        printf("Uso: %s <arquivo>\n", argv[0]);
+        printf("Uso: %s <nome_do_arquivo>\n", argv[0]);
         return 1;
     }
 
-    unsigned int tab[TAM];
-    unsigned char *texto = lerArquivoParaArray((unsigned char *)argv[1]);
-    if (!texto) {
-        printf("Erro ao ler o arquivo.\n");
-        return 1;
-    }
+    unsigned char *conteudo = lerArquivoParaArray(argv[1]);
+    if (!conteudo) return 1;
 
-    inicializa_tabela_com_zero(tab);
-    preenche_tab_frequencia(texto, tab);
-    imprime_tab_frequencia(tab);
-
+    unsigned int tabela_frequencia[TAM];
     Lista lista;
+    No *arvore;
+
+    //----------------- Parte 1: tabela de frequencia ------------------------------
+
+    inicializa_tabela_com_zero(tabela_frequencia);
+    preenche_tab_frequencia(conteudo, tabela_frequencia);
+    imprime_tab_frequencia(tabela_frequencia);
+
+    //----------------- Parte 2: Lista Encadeada Ordenada ------------------------------
+
     criar_lista(&lista);
-    preencher_lista(tab, &lista);
+    preencher_lista(tabela_frequencia, &lista);
     imprimir_lista(&lista);
 
-    No *raiz = montar_arvore(&lista);
-    printf("\nÁrvore de Huffman (pré-ordem):\n");
-    imprimir_arvore(raiz, 0);
+    //----------------- Parte 3: Montar a árvore de Huffman -----------------------------
 
-    char *dicionario[TAM] = {NULL};
-    char caminho[TAM];
-    montar_dicionario(raiz, caminho, 0, dicionario);
+    arvore = montar_arvore(&lista);
+    printf("\n\tÁrvore de Huffman\n");
+    imprimir_arvore(arvore, 0);
 
-    printf("\nDicionário de códigos:\n");
-    for (int i = 0; i < TAM; i++) {
-        if (dicionario[i]) {
-            printf("%c: %s\n", i, dicionario[i]);
-        }
+    //----------------- Parte 4: Montar o dicionário ------------------------------------
+
+    char *dicionario[TAM] = {0};       // Inicializa o dicionário
+    char caminho[TAM];                 // Buffer temporário para o caminho
+
+    montar_dicionario(arvore, caminho, 0, dicionario);
+
+    // Exemplo de uso:
+    for (int i = 0; i < 256; i++) {
+        if (dicionario[i])
+            printf("\n\t'%c' -> %s\n", i, dicionario[i]);
     }
 
-    int tamanhoCodificado = calcula_tamanho_string(dicionario, texto);
-    char *textoCodificado = codificar(dicionario, texto);
+    //---------------- Parte 5: Codificar ----------------------------------------------
 
-    printf("\nTexto codificado:\n%s\n", textoCodificado);
-    printf("\nTamanho codificado: %d bits\n", tamanhoCodificado);
+    char *codificado;
+    codificado = codificar(dicionario, conteudo);
+    printf("\n\tTexto codificado: %s\n", codificado);
 
-    free(texto);
-    free(textoCodificado);
-    for (int i = 0; i < TAM; i++) {
-        free(dicionario[i]);
-    }
-
+    free(conteudo);
     return 0;
 }
+
