@@ -9,29 +9,28 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    unsigned char *conteudo = lerArquivoParaArray(argv[1]);
+    long tamanho;
+    unsigned char *conteudo = lerArquivoParaArray(argv[1], &tamanho);
     if (!conteudo) return 1;
 
-    unsigned int tabela_frequencia[TAM];
-    Lista lista;
-    No *arvore;
-
     //----------------- Parte 1: tabela de frequencia ------------------------------
+    unsigned int tabela_frequencia[TAM];
 
-    inicializa_tabela_com_zero(tabela_frequencia);
-    preenche_tab_frequencia(conteudo, tabela_frequencia);
+    preenche_tab_frequencia(conteudo, tamanho, tabela_frequencia);
     imprime_tab_frequencia(tabela_frequencia);
 
     //----------------- Parte 2: Lista Encadeada Ordenada ------------------------------
+    Lista lista;
 
     criar_lista(&lista);
     preencher_lista(tabela_frequencia, &lista);
     imprimir_lista(&lista);
 
     //----------------- Parte 3: Montar a árvore de Huffman -----------------------------
+    No *arvore;
 
     arvore = montar_arvore(&lista);
-    printf("\n\tÁrvore de Huffman\n");
+    printf("\n[+] Árvore de Huffman (formato de árvore):\n");
     imprimir_arvore(arvore, 0);
 
     //----------------- Parte 4: Montar o dicionário ------------------------------------
@@ -50,7 +49,7 @@ int main(int argc, char *argv[]) {
     //---------------- Parte 5: Codificar ----------------------------------------------
 
     char *codificado;
-    codificado = codificar(dicionario, conteudo);
+    codificado = codificar(dicionario, conteudo, tamanho);
     printf("\n\tTexto codificado: %s\n", codificado);
 
     free(conteudo);

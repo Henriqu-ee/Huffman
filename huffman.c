@@ -1,7 +1,7 @@
 #include "huffman.h"
 #include <string.h>
 
-unsigned char* lerArquivoParaArray(const unsigned char *nomeArquivo) {
+unsigned char* lerArquivoParaArray(const unsigned char *nomeArquivo, long * tamanho) {
     FILE *arquivo = fopen(nomeArquivo, "rb"); // leitura binária
     if (!arquivo) {
         perror("Erro ao abrir o arquivo");
@@ -9,43 +9,31 @@ unsigned char* lerArquivoParaArray(const unsigned char *nomeArquivo) {
     }
 
     fseek(arquivo, 0, SEEK_END);
-    long tamanho = ftell(arquivo);
+    *tamanho = ftell(arquivo); 
     rewind(arquivo);
 
-    unsigned char *conteudo = malloc((tamanho + 1) * sizeof(unsigned char));
-    if (!conteudo) {
-        perror("Erro ao alocar memória");
-        fclose(arquivo);
-        return NULL;
-    }
-
-    size_t lido = fread(conteudo, sizeof(unsigned char), tamanho, arquivo);
-    conteudo[lido] = '\0'; // marcador extra, útil para leitura de texto
-
+    unsigned char *dados = malloc(*tamanho);
+    fread(dados, 1, *tamanho, arquivo);
     fclose(arquivo);
-    return conteudo;
+    return dados;
 }
 
 //----------------- Parte 1: tabela de frequencia ------------------------------
-
-void inicializa_tabela_com_zero(unsigned int tab[]) {
+void preenche_tab_frequencia(unsigned char texto[], long tam, unsigned int tab[]) {
     for (int i = 0; i < TAM; i++) 
         tab[i] = 0;
-}
 
-void preenche_tab_frequencia(unsigned char texto[], unsigned int tab[]) {
-    int i = 0;
-    while (texto[i] != '\0') {
+    for (long i = 0; i < tam; i++) {
         tab[texto[i]]++;
-        i++;
     }
+        
 }
 
 void imprime_tab_frequencia(unsigned int tab[]) {
-    printf("\n\tTABELA DE FREQUÊNCIA:\n");
+    printf("\n[+] Frequência dos caracteres:\n");
     for (int i = 0; i < TAM; i++) {
-        if (tab[i] > 0) 
-            printf("\t%d = %u = '%c'\n", i, tab[i], i);
+        if (tab[i] > 0)
+            printf(" '%c' (%d): %d\n", (i >= 32 && i <= 126 ? i : '.'), i, tab[i]);
     }
 }
 
@@ -54,14 +42,6 @@ void imprime_tab_frequencia(unsigned int tab[]) {
 void criar_lista(Lista *lista) {
     lista->inicio = NULL;
     lista->tam = 0;
-}
-
-No* criar_no(unsigned char *caractere, int frequencia) {
-    No *novo = (No *) malloc(sizeof(No));
-    novo->caractere = caractere;
-    novo->frequencia = frequencia;
-    novo->esquerda = novo->direita = novo->proximo = NULL;
-    return novo;
 }
 
 void inserir_ordenado(Lista *lista, No *no) {
@@ -86,11 +66,9 @@ void inserir_ordenado(Lista *lista, No *no) {
 }
 
 void preencher_lista(unsigned int tab[], Lista *lista) {
-    int i;
-    No *novo;
-    for (i = 0; i < TAM; i++) {
+    for (int i = 0; i < TAM; i++) {
         if (tab[i] > 0) {
-            novo = (No*) malloc(sizeof(No));
+            No *novo = (No*) malloc(sizeof(No));
             if (novo) {
                 unsigned char *ptr_caractere = malloc(sizeof(unsigned char));
                 *ptr_caractere = (unsigned char)i;
@@ -110,12 +88,12 @@ void preencher_lista(unsigned int tab[], Lista *lista) {
 }
 
 void imprimir_lista(Lista *lista) {
-    No *aux = lista->inicio;
-
-    printf("\n\tLista ordenada: Tamanho: %d\n", lista->tam);
-    while (aux) {
-        printf("\tCaracter: %c Frequência: %d\n", *(unsigned char*)aux->caractere, aux->frequencia);
-        aux = aux->proximo;
+    printf("\n[+] Lista ordenada (frequências crescentes):\n");
+    No *atual = lista->inicio;
+    while (atual) {
+        unsigned char c = *(unsigned char*)atual->caractere;
+        printf(" '%c' (%d) - freq: %d\n", (c >= 32 && c <= 126 ? c : '.'), c, atual->frequencia);
+        atual = atual->proximo;
     }
 }
 
@@ -161,14 +139,17 @@ No* montar_arvore(Lista *lista) {
     return lista->inicio; // retorna o no raiz
 }
 
-void imprimir_arvore(No *raiz, int tam) {
-    if(raiz->esquerda == NULL && raiz->direita == NULL)
-        printf("\tFolha: %c\tAltura: %d\n", *(unsigned char*)raiz->caractere, tam);
-    else {
-        imprimir_arvore(raiz->esquerda, tam + 1);
-        imprimir_arvore(raiz->direita, tam + 1);
-    }
+void imprimir_arvore(No *raiz, int nivel) {
+    if (raiz == NULL) return;
+    for (int i = 0; i < nivel; i++) printf("  ");
+    if (raiz->caractere)
+        printf("'%c' (%d): %d\n", (*(unsigned char*)raiz->caractere >= 32 && *(unsigned char*)raiz->caractere <= 126 ? *(unsigned char*)raiz->caractere : '.'), *(unsigned char*)raiz->caractere, raiz->frequencia);
+    else
+        printf("*: %d\n", raiz->frequencia);
+    imprimir_arvore(raiz->esquerda, nivel + 1);
+    imprimir_arvore(raiz->direita, nivel + 1);
 }
+
 
 //----------------- Parte 4: Montar o dicionário ------------------------------------
 
@@ -194,23 +175,12 @@ void montar_dicionario(No *raiz, char *caminho, int profundidade, char **diciona
 
 //---------------- Parte 5: Codificar ----------------------------------------------
 
-int calcula_tamanho_string(char **dicionario, unsigned char *texto) {
-    int i = 0, tam = 0;
-    while (texto[i] != '\0') {
-        tam = tam + strlen(dicionario[texto[i]]);
-        i++;
-    }
-    return tam + 1;
-}
+char* codificar(char **dicionario, unsigned char *texto, long tam) {
+    char *codigo = calloc(tam * 16, sizeof(char));
 
-char* codificar(char **dicionario, unsigned char *texto) {
-    int i = 0;
-    int tam = calcula_tamanho_string(dicionario, (char*)texto);
-    char *codigo = calloc(tam, sizeof(char));
-
-    while (texto[i] != '\0') {
+    for (long i = 0; i < tam; i++) {
         strcat(codigo, dicionario[texto[i]]);
-        i++;
     }
+    
     return codigo;
 }

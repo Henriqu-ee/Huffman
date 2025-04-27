@@ -33,16 +33,9 @@ typedef struct {
  * @param nomeArquivo Nome ou caminho do arquivo.
  * @return unsigned char* Ponteiro para o conteúdo lido (alocado dinamicamente).
  */
-unsigned char* lerArquivoParaArray(const unsigned char *nomeArquivo);
+unsigned char* lerArquivoParaArray(const unsigned char *nomeArquivo, long *tamanho);
 
 //------------------ Tabela de Frequência --------------------
-
-/**
- * @brief Inicializa a tabela de frequência com zeros.
- * 
- * @param tab Vetor de 256 posições a ser zerado.
- */
-void inicializa_tabela_com_zero(unsigned int tab[]);
 
 /**
  * @brief Preenche a tabela de frequência com base no texto.
@@ -50,7 +43,7 @@ void inicializa_tabela_com_zero(unsigned int tab[]);
  * @param texto Vetor de caracteres lidos do arquivo.
  * @param tab Vetor de 256 posições onde serão contadas as frequências.
  */
-void preenche_tab_frequencia(unsigned char texto[], unsigned int tab[]);
+void preenche_tab_frequencia(unsigned char texto[], long tam, unsigned int tab[]);
 
 /**
  * @brief Imprime os caracteres presentes e suas frequências.
@@ -132,21 +125,12 @@ void montar_dicionario(No *raiz, char *caminho, int profundidade, char **diciona
 //------------------ Codificação -------------------------------
 
 /**
- * @brief Calcula o tamanho total do texto codificado.
- * 
- * @param dicionario Dicionário com os códigos binários.
- * @param texto Texto original a ser codificado.
- * @return Tamanho total necessário para alocar a string codificada.
- */
-int calcula_tamanho_string(char **dicionario, unsigned char *texto);
-
-/**
  * @brief Codifica o texto usando o dicionário de Huffman.
  * 
  * @param dicionario Vetor com os códigos binários.
  * @param texto Texto original.
  * @return String com o texto codificado em 0s e 1s.
  */
-char* codificar(char **dicionario, unsigned char *texto);
+char* codificar(char **dicionario, unsigned char *texto, long tam);
 
 #endif
